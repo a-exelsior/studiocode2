@@ -1,24 +1,806 @@
 <!DOCTYPE html>
- <html>
- <head>
-    <title>Real-Time Editor</title>
-    <link rel="stylesheet" type="text/css" href="styles.css">
-    <script defer type="text/javascript" src="app.js"></script>
-    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script> -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.0.0/split.min.js" integrity="sha512-tTsZnBXEzNdEaqUO9Ok8fUofS73xieiBa54pD/sxOSvayIgItM9MmEM0CnUjA13LDnJT22sfwmjf20+Bo2174g==" crossorigin="anonymous"></script>
- </head>
- <body>
-    <div class="container split">
-        <!-- Text area for Html Code  -->
-        <textarea id="htmlCode"  placeholder="Type HTML code here" spellcheck="false" oninput="update(0)" onkeydown="if(event.keyCode===9){var v=this.value,s=this.selectionStart,e=this.selectionEnd;this.value=v.substring(0, s)+'\t'+v.substring(e);this.selectionStart=this.selectionEnd=s+1;return false;}if(event.keyCode==8){update(1);}"></textarea>
-        <!-- Text area for Css Code  -->
-        <textarea id="cssCode"  placeholder="Type CSS code here" spellcheck="false" oninput="update(0)" onkeydown="if(event.keyCode===9){var v=this.value,s=this.selectionStart,e=this.selectionEnd;this.value=v.substring(0, s)+'\t'+v.substring(e);this.selectionStart=this.selectionEnd=s+1;return false;}if(event.keyCode==8){update(1);}"></textarea>
-        <!-- Text area for Javascript Code  -->
-        <textarea id="javascriptCode" spellcheck="false" placeholder="Type JavaScript code here" oninput="update(0)" onkeydown="if(event.keyCode===9){var v=this.value,s=this.selectionStart,e=this.selectionEnd;this.value=v.substring(0, s)+'\t'+v.substring(e);this.selectionStart=this.selectionEnd=s+1;return false;}if(event.keyCode==8){update(1);}"></textarea>
-    </div>
-    <div class="iframe-container split">
-        <iframe id="viewer"></iframe>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Machine Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(to bottom, #581c87, #1e3a8a, #3730a3);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            font-size: 14px;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header styles */
+        .header {
+            text-align: center;
+            padding: 16px;
+        }
+
+        .balance-card {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 12px;
+            margin: 0 16px;
+        }
+
+        .balance-label {
+            color: #00bfff;
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .balance-amount {
+            color: white;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        /* Slot machine balance */
+        .slot-balance {
+            text-align: center;
+            padding: 0 16px 16px;
+        }
+
+        .slot-balance-card {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 0 16px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .slot-balance-label {
+            color: #ffd700;
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .slot-balance-amount {
+            color: white;
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .win-message {
+            color: #00ff00;
+            font-size: 18px;
+            animation: pulse 1s infinite;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            background: transparent;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-add {
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+
+        .btn-add:hover:not(:disabled) {
+            background: #00ff00;
+            color: black;
+        }
+
+        .btn-cashout {
+            border-color: #ffa500;
+            color: #ffa500;
+        }
+
+        .btn-cashout:hover:not(:disabled) {
+            background: #ffa500;
+            color: black;
+        }
+
+        /* Paytable */
+        .paytable {
+            padding: 0 16px 16px;
+        }
+
+        .paytable-card {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 0 16px;
+        }
+
+        .paytable-title {
+            color: white;
+            text-align: center;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .paytable-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .paytable-yellow { color: #ffd700; }
+        .paytable-red { color: #ff4444; }
+        .paytable-orange { color: #ffa500; }
+
+        /* Slot reels */
+        .slot-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 16px;
+        }
+
+        .slot-machine {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
+            padding: 24px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .reels-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .reel {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 16px;
+            border: 4px solid #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .reel.spinning {
+            animation: pulse 0.1s infinite;
+            transform: scale(1.1);
+        }
+
+        .reel.stopping {
+            animation: bounce 0.3s;
+            transform: scale(1.25);
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .reel-symbol {
+            font-size: 32px;
+        }
+
+        .spin-button {
+            width: 100%;
+            height: 64px;
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(to right, #dc2626, #ec4899);
+            border: 4px solid #ffd700;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
+        }
+
+        .spin-button:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+
+        .spin-button:disabled {
+            opacity: 0.5;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        .spin-button.spinning {
+            animation: pulse 0.5s infinite;
+        }
+
+        /* Bet controls */
+        .bet-controls {
+            padding: 24px;
+        }
+
+        .bet-card {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 0 16px;
+        }
+
+        .bet-title {
+            text-align: center;
+            color: white;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .bet-amount-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .bet-adjust-btn {
+            width: 48px;
+            height: 48px;
+            font-size: 18px;
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bet-adjust-btn:hover:not(:disabled) {
+            background: #ffd700;
+            color: black;
+        }
+
+        .bet-adjust-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .bet-display {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            padding: 12px 24px;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .bet-amount {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .preset-bets {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .preset-btn {
+            padding: 6px 12px;
+            border: 1px solid #666;
+            color: #ccc;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover:not(:disabled) {
+            background: #666;
+            color: white;
+        }
+
+        .preset-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                transform: translate3d(0,0,0) scale(1.25);
+            }
+            40%, 43% {
+                transform: translate3d(0,-30px,0) scale(1.25);
+            }
+            70% {
+                transform: translate3d(0,-15px,0) scale(1.25);
+            }
+            90% {
+                transform: translate3d(0,-4px,0) scale(1.25);
+            }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 480px) {
+            .reels-container {
+                gap: 6px;
+            }
+           
+            .reel {
+                width: 70px;
+                height: 70px;
+            }
+           
+            .reel-symbol {
+                font-size: 28px;
+            }
+           
+            .slot-machine {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header - Player Balance -->
+        <div class="header">
+            <div class="balance-card">
+                <p class="balance-label">PLAYER BALANCE</p>
+                <p class="balance-amount">👤 $<span id="playerBalance">5000</span></p>
+            </div>
+        </div>
+
+        <!-- Slot Machine Balance -->
+        <div class="slot-balance">
+            <div class="slot-balance-card">
+                <p class="slot-balance-label">SLOT MACHINE BALANCE</p>
+                <p class="slot-balance-amount">🎰 $<span id="slotBalance">100</span></p>
+                <div id="winMessage" class="win-message" style="display: none;"></div>
+               
+                <!-- Add Money & Cash Out Buttons -->
+                <div class="button-group">
+                    <button class="btn btn-add" onclick="addMoney(50)" id="add50Btn">+$50</button>
+                    <button class="btn btn-add" onclick="addMoney(100)" id="add100Btn">+$100</button>
+                    <button class="btn btn-cashout" onclick="cashOut()" id="cashOutBtn">Cash Out</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paytable -->
+        <div class="paytable">
+            <div class="paytable-card">
+                <p class="paytable-title">PAYTABLE</p>
+                <div class="paytable-grid">
+                    <div class="paytable-yellow">🔔🔔🔔 = ×25</div>
+                    <div class="paytable-yellow">🔔🔔 = ×10</div>
+                    <div class="paytable-red">🍒🍒🍒 = ×5</div>
+                    <div class="paytable-red">🍒🍒 = ×2</div>
+                    <div class="paytable-orange">🍊🍊🍊 = ×2</div>
+                    <div class="paytable-orange">🍊🍊 = ×1</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle - Slot Reels -->
+        <div class="slot-area">
+            <div class="slot-machine">
+                <div class="reels-container">
+                    <div class="reel" id="reel1">
+                        <span class="reel-symbol">🍒</span>
+                    </div>
+                    <div class="reel" id="reel2">
+                        <span class="reel-symbol">🍒</span>
+                    </div>
+                    <div class="reel" id="reel3">
+                        <span class="reel-symbol">🍒</span>
+                    </div>
+                </div>
+               
+                <!-- Spin Button -->
+                <button class="spin-button" onclick="spin()" id="spinBtn">
+                    SPIN! 🎰
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom - Bet Controls -->
+        <div class="bet-controls">
+            <div class="bet-card">
+                <p class="bet-title">BET AMOUNT</p>
+               
+                <div class="bet-amount-controls">
+                    <button class="bet-adjust-btn" onclick="adjustBet(-1)" id="betDownBtn">-</button>
+                   
+                    <div class="bet-display">
+                        <span class="bet-amount">$<span id="betAmount">1</span></span>
+                    </div>
+                   
+                    <button class="bet-adjust-btn" onclick="adjustBet(1)" id="betUpBtn">+</button>
+                </div>
+               
+                <div class="preset-bets">
+                    <button class="preset-btn" onclick="setBet(1)">$1</button>
+                    <button class="preset-btn" onclick="setBet(5)">$5</button>
+                    <button class="preset-btn" onclick="setBet(10)">$10</button>
+                    <button class="preset-btn" onclick="setBet(25)">$25</button>
+                </div>
+            </div>
+        </div>
     </div>
 
- </body>
- </html>
+    <script>
+        // Game state
+        let gameState = {
+            playerBalance: 5000,
+            slotMachineBalance: 100,
+            betAmount: 1,
+            isSpinning: false,
+            reels: [0, 0, 0],
+            lastWin: 0
+        };
+
+        const SLOT_SYMBOLS = ['🍒', '🍊', '🔔', '🍇'];
+
+        // Sound Manager
+        class SoundManager {
+            constructor() {
+                this.audioContext = null;
+                this.spinningInterval = null;
+                this.initAudioContext();
+            }
+
+            initAudioContext() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (error) {
+                    console.warn('Web Audio API not supported');
+                }
+            }
+
+            async ensureAudioContext() {
+                if (!this.audioContext) {
+                    this.initAudioContext();
+                }
+               
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    await this.audioContext.resume();
+                }
+            }
+
+            async playSpinningSound() {
+                await this.ensureAudioContext();
+                if (!this.audioContext) return;
+
+                if (this.spinningInterval) {
+                    clearInterval(this.spinningInterval);
+                }
+
+                const playBeep = () => {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                   
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                   
+                    oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, this.audioContext.currentTime + 0.1);
+                   
+                    gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+                   
+                    oscillator.start();
+                    oscillator.stop(this.audioContext.currentTime + 0.1);
+                };
+
+                this.spinningInterval = setInterval(playBeep, 150);
+            }
+
+            stopSpinningSound() {
+                if (this.spinningInterval) {
+                    clearInterval(this.spinningInterval);
+                    this.spinningInterval = null;
+                }
+            }
+
+            async playWinSound() {
+                await this.ensureAudioContext();
+                if (!this.audioContext) return;
+
+                const frequencies = [523, 659, 784, 1047]; // C5, E5, G5, C6
+               
+                frequencies.forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = this.audioContext.createOscillator();
+                        const gainNode = this.audioContext.createGain();
+                       
+                        oscillator.connect(gainNode);
+                        gainNode.connect(this.audioContext.destination);
+                       
+                        oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                        oscillator.type = 'triangle';
+                       
+                        gainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                       
+                        oscillator.start();
+                        oscillator.stop(this.audioContext.currentTime + 0.3);
+                    }, index * 100);
+                });
+            }
+
+            async playLoseSound() {
+                await this.ensureAudioContext();
+                if (!this.audioContext) return;
+
+                const frequencies = [440, 370, 311, 262]; // A4, F#4, D#4, C4
+               
+                frequencies.forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = this.audioContext.createOscillator();
+                        const gainNode = this.audioContext.createGain();
+                       
+                        oscillator.connect(gainNode);
+                        gainNode.connect(this.audioContext.destination);
+                       
+                        oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                        oscillator.type = 'sawtooth';
+                       
+                        gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.4);
+                       
+                        oscillator.start();
+                        oscillator.stop(this.audioContext.currentTime + 0.4);
+                    }, index * 150);
+                });
+            }
+        }
+
+        const soundManager = new SoundManager();
+
+        // Slot Reel Animation
+        class SlotReel {
+            constructor(reelElement, index) {
+                this.element = reelElement;
+                this.symbolElement = reelElement.querySelector('.reel-symbol');
+                this.index = index;
+                this.currentSymbol = SLOT_SYMBOLS[0];
+                this.animationPhase = 0; // 0: idle, 1: spinning, 2: stopping
+                this.spinInterval = null;
+            }
+
+            startSpinning(delay = 0) {
+                const startAnimation = () => {
+                    this.animationPhase = 1;
+                    this.element.classList.add('spinning');
+                   
+                    // Rapidly change symbols
+                    this.spinInterval = setInterval(() => {
+                        const randomSymbol = SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
+                        this.symbolElement.textContent = randomSymbol;
+                    }, 100);
+                };
+
+                if (delay > 0) {
+                    setTimeout(startAnimation, delay);
+                } else {
+                    startAnimation();
+                }
+            }
+
+            stopSpinning(finalSymbol, delay = 1500) {
+                setTimeout(() => {
+                    if (this.spinInterval) {
+                        clearInterval(this.spinInterval);
+                    }
+                   
+                    this.element.classList.remove('spinning');
+                    this.element.classList.add('stopping');
+                    this.symbolElement.textContent = finalSymbol;
+                    this.animationPhase = 2;
+                   
+                    // Reset to idle after animation
+                    setTimeout(() => {
+                        this.element.classList.remove('stopping');
+                        this.animationPhase = 0;
+                    }, 300);
+                }, delay + (this.index * 200));
+            }
+        }
+
+        // Initialize reels
+        const reels = [
+            new SlotReel(document.getElementById('reel1'), 0),
+            new SlotReel(document.getElementById('reel2'), 1),
+            new SlotReel(document.getElementById('reel3'), 2)
+        ];
+
+        // Game functions
+        async function spin() {
+            if (gameState.isSpinning || gameState.slotMachineBalance < gameState.betAmount) {
+                return;
+            }
+           
+            gameState.isSpinning = true;
+            gameState.slotMachineBalance -= gameState.betAmount;
+            gameState.lastWin = 0;
+           
+            updateUI();
+           
+            // Start spinning sound
+            await soundManager.playSpinningSound();
+           
+            // Start reel animations
+            reels.forEach((reel, index) => {
+                reel.startSpinning(index * 200);
+            });
+           
+            // Generate random results
+            const newReels = [
+                Math.floor(Math.random() * SLOT_SYMBOLS.length),
+                Math.floor(Math.random() * SLOT_SYMBOLS.length),
+                Math.floor(Math.random() * SLOT_SYMBOLS.length)
+            ];
+           
+            gameState.reels = newReels;
+           
+            // Stop reels with final symbols
+            reels.forEach((reel, index) => {
+                reel.stopSpinning(SLOT_SYMBOLS[newReels[index]]);
+            });
+           
+            // Handle spin result after animation
+            setTimeout(async () => {
+                soundManager.stopSpinningSound();
+               
+                const winAmount = calculateWin(newReels);
+                if (winAmount > 0) {
+                    gameState.slotMachineBalance += winAmount;
+                    gameState.lastWin = winAmount;
+                    await soundManager.playWinSound();
+                    showWinMessage(winAmount);
+                } else {
+                    await soundManager.playLoseSound();
+                    hideWinMessage();
+                }
+               
+                gameState.isSpinning = false;
+                updateUI();
+            }, 2000);
+        }
+
+        function calculateWin(reelResults) {
+            const symbols = reelResults.map(index => SLOT_SYMBOLS[index]);
+           
+            // Count occurrences of each symbol
+            const bellCount = symbols.filter(s => s === '🔔').length;
+            const cherryCount = symbols.filter(s => s === '🍒').length;
+            const orangeCount = symbols.filter(s => s === '🍊').length;
+            const plumCount = symbols.filter(s => s === '🍇').length;
+
+            // Check for specific combinations in order of highest payout
+            if (bellCount === 3) return gameState.betAmount * 25;
+            if (bellCount === 2) return gameState.betAmount * 10;
+            if (cherryCount === 3) return gameState.betAmount * 5;
+            if (orangeCount === 3) return gameState.betAmount * 2;
+            if (cherryCount === 2) return gameState.betAmount * 2;
+            if (orangeCount === 2) return gameState.betAmount * 1;
+            if (plumCount === 3) return gameState.betAmount * 3;
+           
+            return 0;
+        }
+
+        function adjustBet(amount) {
+            const newBet = Math.max(1, Math.min(gameState.slotMachineBalance, gameState.betAmount + amount));
+            gameState.betAmount = newBet;
+            updateUI();
+        }
+
+        function setBet(amount) {
+            gameState.betAmount = Math.min(amount, gameState.slotMachineBalance);
+            updateUI();
+        }
+
+        function addMoney(amount) {
+            if (gameState.playerBalance >= amount) {
+                gameState.playerBalance -= amount;
+                gameState.slotMachineBalance += amount;
+                updateUI();
+            }
+        }
+
+        function cashOut() {
+            gameState.playerBalance += gameState.slotMachineBalance;
+            gameState.slotMachineBalance = 0;
+            gameState.betAmount = 1;
+            hideWinMessage();
+            updateUI();
+        }
+
+        function showWinMessage(amount) {
+            const winMessage = document.getElementById('winMessage');
+            winMessage.textContent = `+$${amount} WIN! 🎉`;
+            winMessage.style.display = 'block';
+        }
+
+        function hideWinMessage() {
+            document.getElementById('winMessage').style.display = 'none';
+        }
+
+        function updateUI() {
+            // Update balances
+            document.getElementById('playerBalance').textContent = gameState.playerBalance;
+            document.getElementById('slotBalance').textContent = gameState.slotMachineBalance;
+            document.getElementById('betAmount').textContent = gameState.betAmount;
+           
+            // Update button states
+            const spinBtn = document.getElementById('spinBtn');
+            spinBtn.disabled = gameState.isSpinning || gameState.slotMachineBalance < gameState.betAmount;
+            spinBtn.textContent = gameState.isSpinning ? 'SPINNING... 🎵' : 'SPIN! 🎰';
+            spinBtn.className = gameState.isSpinning ? 'spin-button spinning' : 'spin-button';
+           
+            // Bet controls
+            document.getElementById('betDownBtn').disabled = gameState.betAmount <= 1;
+            document.getElementById('betUpBtn').disabled = gameState.betAmount >= gameState.slotMachineBalance;
+           
+            // Add money buttons
+            document.getElementById('add50Btn').disabled = gameState.playerBalance < 50;
+            document.getElementById('add100Btn').disabled = gameState.playerBalance < 100;
+           
+            // Cash out button
+            document.getElementById('cashOutBtn').disabled = gameState.slotMachineBalance === 0;
+           
+            // Preset bet buttons
+            document.querySelectorAll('.preset-btn').forEach((btn, index) => {
+                const amounts = [1, 5, 10, 25];
+                btn.disabled = amounts[index] > gameState.slotMachineBalance;
+            });
+        }
+
+        // Initialize the game
+        updateUI();
+
+        // Enable audio context on first user interaction
+        document.addEventListener('click', () => {
+            soundManager.ensureAudioContext();
+        }, { once: true });
+    </script>
+</body>
+</html>
